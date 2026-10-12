@@ -1,0 +1,8 @@
+import { Activity, Bot, Code2, Cpu, Wifi, Zap, ArrowUpRight, BookOpen } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { SectionHeading } from '../../../components/SectionHeading';
+import { topics } from '../../../data/topics';
+const icons = { cpu: Cpu, zap: Zap, activity: Activity, bot: Bot, wifi: Wifi, code: Code2 };
+export function LearnPage() {
+  return <div className="container page-container"><div className="page-hero"><div className="eyebrow"><BookOpen size={14}/> The learning map</div><h1>Curriculum <span>Dashboard</span></h1><p>Pick a topic to explore concepts, code examples and projects in a natural learning order.</p></div><SectionHeading eyebrow="Explore by topic" title="What do you want to make?" description="Start anywhere, or follow a guided course from the beginning."/><div className="topic-grid">{topics.map((topic) => { const Icon = icons[topic.icon] || Cpu; return <Link to="/courses" className="topic-card" key={topic.title}><div className={`topic-icon topic-${topic.color}`}><Icon size={22}/></div><div className="eyebrow">{topic.category}</div><h3>{topic.title}</h3><p>{topic.description}</p><div className="topic-bottom"><span>{topic.count}</span><ArrowUpRight size={16}/></div></Link>; })}</div><div className="inline-callout"><div><span className="eyebrow">Prefer a guided path?</span><h3>Follow a course from lesson one.</h3><p>Structured modules keep your learning organised.</p></div><Link className="button button-primary" to="/courses">Browse courses <ArrowUpRight size={15}/></Link></div></div>;
+}

@@ -1,0 +1,5 @@
+export const lectures = [
+  { id: 'l1', slug: 'arduino-basics', title: 'Arduino Basics: Getting Started', category: 'Getting Started', duration: '12:40', videoId: 'nL34zDTPkcs', description: 'Understand the Arduino board, IDE and the workflow for uploading your first sketch.', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=85' },
+  { id: 'l2', slug: 'understanding-leds', title: 'LEDs, Resistors & Simple Circuits', category: 'Electronics', duration: '18:25', videoId: '5v5Q6w0gV4I', description: 'Learn polarity, current limiting and safe breadboard wiring.', image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=900&q=85' },
+  { id: 'l3', slug: 'reading-sensors', title: 'Reading Sensors with Arduino', category: 'Sensors', duration: '22:10', videoId: '6F1B_N6LuKw', description: 'Explore digital and analog sensor readings using Serial Monitor.', image: 'https://images.unsplash.com/photo-1581092921461-eab62e97a780?auto=format&fit=crop&w=900&q=85' }
+];

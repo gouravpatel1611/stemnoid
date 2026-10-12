@@ -1,0 +1,1 @@
+export function Tag({ children, tone = 'blue' }) { return <span className={`tag tag-${tone}`}>{children}</span>; }

@@ -1,0 +1,3 @@
+import { ArrowLeft, Compass } from 'lucide-react';
+import { Link } from 'react-router-dom';
+export function NotFoundPage() { return <div className="container not-found"><Compass size={36}/><div className="eyebrow">404 · WRONG TURN</div><h1>This page is off the circuit.</h1><p>The page may have moved or does not exist yet.</p><Link className="button button-primary" to="/"><ArrowLeft size={15}/> Back home</Link></div>; }

@@ -1,0 +1,16 @@
+import { createContext, useContext, useEffect, useState } from 'react';
+const ThemeContext = createContext(null);
+export function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState(() => localStorage.getItem('codehub-theme') || 'dark');
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('codehub-theme', theme);
+  }, [theme]);
+  const toggleTheme = () => setTheme((current) => current === 'dark' ? 'light' : 'dark');
+  return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
+}
+export function useTheme() {
+  const value = useContext(ThemeContext);
+  if (!value) throw new Error('useTheme must be used inside ThemeProvider');
+  return value;
+}
