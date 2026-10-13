@@ -9,11 +9,15 @@ export function Logo() {
       to="/"
       aria-label="STEMNOID home"
     >
-      <span className="brand-mark">
-        <Cpu size={19} />
+       <span >
+        <img
+          src="/logo-icon.png"
+          alt=""
+          className="h-10 w-full object-contain"
+        />
       </span>
 
-      <span className="brand-name">
+      <span className="brand-name -ml-[115px]">
         STEM<span className="brand-accent">NOID</span>
       </span>
     </Link>

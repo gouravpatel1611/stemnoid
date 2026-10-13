@@ -1,4 +1,4 @@
-# Aditya.invents — Arduino Learning Website
+# STEMNOID — Arduino Learning Website
 
 Starter UI based on the supplied 9-page phone/desktop blueprint. This is a frontend prototype with demo data only. Firebase/backend and real admin authentication are intentionally not connected yet.
 
