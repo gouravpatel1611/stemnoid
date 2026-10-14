@@ -12,6 +12,7 @@ import {
   Sparkles,
   Terminal,
   Wrench,
+  GraduationCap,
 } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
@@ -118,10 +119,10 @@ export function HomePage() {
 
             <Link
               className="button button-ghost button-large"
-              to="/lectures"
+              to="/learn"
             >
-              <PlayCircle size={17} />
-              Watch lectures
+              <GraduationCap size={18} />
+              Explore STEM
             </Link>
           </div>
 
