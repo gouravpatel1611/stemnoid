@@ -1,689 +1,185 @@
-
-import { useState } from 'react';
-
+import { useEffect, useMemo, useState } from 'react';
+import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  Activity,
-  ArrowUpRight,
-  BookOpen,
-  CheckCircle2,
-  CircleHelp,
-  Code2,
-  FilePlus2,
-  LayoutDashboard,
-  LogIn,
-  LogOut,
-  Plus,
-  Settings2,
-  ShieldAlert,
-  Video,
-  Youtube,
-  Download,
-  Users,
+  Activity, ArrowDownRight, ArrowUpRight, BookOpen, Boxes, Check, ChevronDown, ChevronLeft,
+  ChevronRight, CircleHelp, Code2, Command, ExternalLink, FileCode2, FileImage, FilePlus2,
+  FolderKanban, Gauge, Globe2, ImagePlus, LayoutDashboard, LogOut, Menu, Moon, MoreHorizontal,
+  PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, ShieldCheck, Sun, Trash2, UploadCloud,
+  UserRound, Video, X, Youtube, Pencil, Eye, RotateCcw, Save, SlidersHorizontal,
 } from 'lucide-react';
+import { AdminDataProvider, useAdminData } from '../context/AdminDataContext';
+import { EmptyState, Field, Modal, PageHeader, Panel, SearchBox, SelectField, StatCard, Toast, useToast } from '../components/AdminUI';
+import '../styles/admin.css';
 
-import {
-  Link,
-  NavLink,
-  Route,
-  Routes,
-  useNavigate,
-} from 'react-router-dom';
+const navGroups = [
+  { label: 'WORKSPACE', items: [
+    { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
+    { to: '/admin/projects', label: 'Arduino Projects', icon: Code2 },
+    { to: '/admin/categories', label: 'Categories', icon: FolderKanban },
+    { to: '/admin/media', label: 'Media Library', icon: ImagePlus },
+  ] },
+  { label: 'PREFERENCES', items: [
+    { to: '/admin/settings', label: 'Website Settings', icon: Settings },
+    { to: '/admin/profile', label: 'Admin Profile', icon: UserRound },
+  ] },
+];
 
-import { projects } from '../../../data/projects';
-import { lectures } from '../../../data/lectures';
-import { courses } from '../../../data/courses';
-import { slugify } from '../../../utils/slugify';
+function AdminShell() {
+  const location = useLocation();
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem('stemnoid-admin-sidebar') === 'collapsed');
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('stemnoid-admin-theme') || 'dark');
+  const [commandOpen, setCommandOpen] = useState(false);
+  const data = useAdminData();
+  const { toast, notify, clearToast } = useToast();
 
-const YOUTUBE_URL = 'https://www.youtube.com/@stemnoid';
+  useEffect(() => { localStorage.setItem('stemnoid-admin-sidebar', collapsed ? 'collapsed' : 'expanded'); }, [collapsed]);
+  useEffect(() => { localStorage.setItem('stemnoid-admin-theme', theme); }, [theme]);
+  useEffect(() => { setMobileOpen(false); setCommandOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    const handleKey = (event) => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); setCommandOpen((open) => !open); } if (event.key === 'Escape') { setCommandOpen(false); setMobileOpen(false); } };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
-function AdminSidebar() {
-  return (
-    <aside className="admin-sidebar">
-      <div className="admin-side-label">WORKSPACE</div>
+  const title = navGroups.flatMap((group) => group.items).find((item) => item.to === location.pathname)?.label
+    || (location.pathname.includes('/projects/') ? (location.pathname.endsWith('/new') ? 'Add Project' : 'Edit Project') : 'Admin Workspace');
 
-      <NavLink to="/admin" end>
-        <LayoutDashboard size={16} />
-        Overview
-      </NavLink>
-
-      <NavLink to="/admin/projects">
-        <Code2 size={16} />
-        Projects & Code
-      </NavLink>
-
-      <NavLink to="/admin/lectures">
-        <Video size={16} />
-        Video Lectures
-      </NavLink>
-
-      <NavLink to="/admin/courses">
-        <BookOpen size={16} />
-        Learning Paths
-      </NavLink>
-
-      <a
-        href={YOUTUBE_URL}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <Youtube size={16} />
-        YouTube Channel
-        <ArrowUpRight size={13} />
-      </a>
-
-      <div className="admin-side-label side-label-lower">
-        FUTURE FEATURES
+  return <div className={`stem-admin ${theme === 'light' ? 'sa-light' : 'sa-dark'} ${collapsed ? 'sa-collapsed' : ''}`}>
+    {mobileOpen && <button className="sa-mobile-scrim" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
+    <aside className={`sa-sidebar ${mobileOpen ? 'sa-mobile-open' : ''}`}>
+      <Link to="/admin" className="sa-brand"><span className="sa-brand-mark"><Command size={21} /></span><span className="sa-brand-copy"><strong>STEMNOID</strong><small>ADMIN STUDIO</small></span><span className="sa-brand-status" /></Link>
+      <div className="sa-sidebar-scroll">
+        {navGroups.map((group) => <div className="sa-nav-group" key={group.label}><div className="sa-nav-label">{group.label}</div>{group.items.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} title={collapsed ? label : undefined} className={({ isActive }) => `sa-nav-link ${isActive ? 'active' : ''}`}><Icon size={18} strokeWidth={1.8} /><span>{label}</span>{label === 'Arduino Projects' && <b className="sa-nav-count">{data.projects.length}</b>}</NavLink>)}</div>)}
+        <div className="sa-sidebar-tip"><div className="sa-tip-icon"><ShieldCheck size={18} /></div><b>Prototype workspace</b><p>Changes are stored in this browser only.</p><span className="sa-demo-pill"><span /> LOCAL DEMO</span></div>
       </div>
-
-      <div className="admin-side-note">
-        <Users size={17} />
-
-        <span>
-          <b>Multiple Admins</b>
-          <small>
-            Admin accounts and permissions require a secure backend.
-          </small>
-        </span>
-      </div>
-
-      <div className="admin-side-note">
-        <Download size={17} />
-
-        <span>
-          <b>Notes & Resources</b>
-          <small>
-            File uploads and downloads will be connected later.
-          </small>
-        </span>
-      </div>
-
-      <Link to="/">
-        <LogOut size={16} />
-        Back to website
-      </Link>
+      <div className="sa-sidebar-bottom"><Link to="/" className="sa-back-link" title={collapsed ? 'View website' : undefined}><ExternalLink size={17} /><span>View public website</span></Link><button className="sa-collapse-button" onClick={() => setCollapsed((value) => !value)} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>{collapsed ? <PanelLeftOpen size={17} /> : <><PanelLeftClose size={17} /><span>Collapse sidebar</span></>}</button></div>
     </aside>
-  );
-}
-
-function AdminOverview() {
-  return (
-    <>
-      <div className="admin-page-title">
-        <div>
-          <div className="eyebrow">STEMNOID CREATOR STUDIO</div>
-
-          <h1>Build. Publish. Inspire.</h1>
-
-          <p>
-            Manage STEM learning content, Arduino projects,
-            video lectures, and learning paths.
-          </p>
-        </div>
-
-        <span className="prototype-pill">
-          <span />
-          Prototype mode
-        </span>
-      </div>
-
-      <div className="admin-stat-grid">
-        <div className="admin-stat">
-          <span className="admin-stat-icon blue">
-            <Code2 size={18} />
-          </span>
-
-          <small>Projects</small>
-          <strong>{projects.length}</strong>
-          <span>Local demo entries</span>
-        </div>
-
-        <div className="admin-stat">
-          <span className="admin-stat-icon purple">
-            <Video size={18} />
-          </span>
-
-          <small>Video lectures</small>
-          <strong>{lectures.length}</strong>
-          <span>Local demo entries</span>
-        </div>
-
-        <div className="admin-stat">
-          <span className="admin-stat-icon green">
-            <BookOpen size={18} />
-          </span>
-
-          <small>Learning paths</small>
-          <strong>{courses.length}</strong>
-          <span>Local demo entries</span>
-        </div>
-
-        <div className="admin-stat">
-          <span className="admin-stat-icon orange">
-            <Activity size={18} />
-          </span>
-
-          <small>Backend</small>
-          <strong>Off</strong>
-          <span>Not connected</span>
-        </div>
-      </div>
-
-      <div className="admin-content-grid">
-        <section className="admin-panel">
-          <div className="admin-panel-head">
-            <div>
-              <h2>Quick actions</h2>
-              <p>Open a content management section.</p>
-            </div>
-
-            <Settings2 size={18} />
-          </div>
-
-          <div className="admin-action-list">
-            <Link to="/admin/projects">
-              <span className="admin-action-icon">
-                <Code2 size={18} />
-              </span>
-
-              <span>
-                <b>Manage projects</b>
-                <small>
-                  Add Arduino code, components, and circuit details.
-                </small>
-              </span>
-
-              <ArrowUpRight size={16} />
-            </Link>
-
-            <Link to="/admin/lectures">
-              <span className="admin-action-icon">
-                <Youtube size={18} />
-              </span>
-
-              <span>
-                <b>Manage video lectures</b>
-                <small>
-                  Prepare YouTube lessons and learning descriptions.
-                </small>
-              </span>
-
-              <ArrowUpRight size={16} />
-            </Link>
-
-            <Link to="/admin/courses">
-              <span className="admin-action-icon">
-                <BookOpen size={18} />
-              </span>
-
-              <span>
-                <b>Manage learning paths</b>
-                <small>
-                  Organise topics and course modules.
-                </small>
-              </span>
-
-              <ArrowUpRight size={16} />
-            </Link>
-          </div>
-        </section>
-
-        <section className="admin-panel">
-          <div className="admin-panel-head">
-            <div>
-              <h2>Publishing checklist</h2>
-              <p>Current development status.</p>
-            </div>
-
-            <CircleHelp size={18} />
-          </div>
-
-          <ul className="admin-checklist">
-            <li>
-              <CheckCircle2 size={16} />
-              Responsive website
-              <span>Done</span>
-            </li>
-
-            <li>
-              <CheckCircle2 size={16} />
-              Dark and white themes
-              <span>Done</span>
-            </li>
-
-            <li>
-              <Activity size={16} />
-              Real content saving
-              <span>Pending</span>
-            </li>
-
-            <li>
-              <Activity size={16} />
-              Admin authentication
-              <span>Pending</span>
-            </li>
-
-            <li>
-              <Activity size={16} />
-              Multiple admin permissions
-              <span>Pending</span>
-            </li>
-
-            <li>
-              <Activity size={16} />
-              PDF and image uploads
-              <span>Pending</span>
-            </li>
-          </ul>
-        </section>
-      </div>
-
-      <section className="admin-panel">
-        <div className="admin-panel-head">
-          <div>
-            <h2>STEMNOID YouTube</h2>
-
-            <p>
-              Open your channel to review or share published lessons.
-            </p>
-          </div>
-
-          <Youtube size={20} />
-        </div>
-
-        <a
-          className="button button-primary"
-          href={YOUTUBE_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Visit YouTube channel
-          <ArrowUpRight size={16} />
-        </a>
-      </section>
-    </>
-  );
-}
-
-function ContentManager({ type }) {
-  const isProject = type === 'project';
-  const isLecture = type === 'lecture';
-
-  const title = isProject
-    ? 'Projects & Code'
-    : isLecture
-      ? 'Video Lectures'
-      : 'Learning Paths';
-
-  const rows = isProject
-    ? projects.map((item) => ({
-        title: item.title,
-        subtitle: item.category,
-        slug: item.slug,
-      }))
-    : isLecture
-      ? lectures.map((item) => ({
-          title: item.title,
-          subtitle: item.category,
-          slug: item.slug,
-        }))
-      : courses.map((item) => ({
-          title: item.title,
-          subtitle: `${item.modules.length} modules`,
-          slug: item.slug,
-        }));
-
-  const [showForm, setShowForm] = useState(false);
-  const [saved, setSaved] = useState(false);
-
-  const [form, setForm] = useState({
-    title: '',
-    url: '',
-    category: '',
-  });
-
-  function updateForm(field, value) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
-  }
-
-  function submit(event) {
-    event.preventDefault();
-
-    // This is only a preview. Data is not persisted yet.
-    setSaved(true);
-    setShowForm(false);
-
-    setForm({
-      title: '',
-      url: '',
-      category: '',
-    });
-  }
-
-  return (
-    <>
-      <div className="admin-page-title">
-        <div>
-          <div className="eyebrow">CONTENT LIBRARY</div>
-
-          <h1>{title}</h1>
-
-          <p>
-            Review existing entries and preview the content workflow.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="button button-primary"
-          onClick={() => {
-            setShowForm((current) => !current);
-            setSaved(false);
-          }}
-        >
-          <Plus size={16} />
-
-          {isProject
-            ? 'Add project'
-            : isLecture
-              ? 'Add lecture'
-              : 'Add learning path'}
-        </button>
-      </div>
-
-      {saved && (
-        <div className="form-notice">
-          <CheckCircle2 size={16} />
-
-          Preview submitted successfully. The entry was not saved
-          because the backend is not connected.
-        </div>
-      )}
-
-      {showForm && (
-        <form
-          className="admin-panel admin-form"
-          onSubmit={submit}
-        >
-          <div className="admin-panel-head">
-            <div>
-              <h2>
-                New{' '}
-                {isProject
-                  ? 'project'
-                  : isLecture
-                    ? 'lecture'
-                    : 'learning path'}
-              </h2>
-
-              <p>
-                Preview form only. Submitted data is not stored.
-              </p>
-            </div>
-
-            <FilePlus2 size={18} />
-          </div>
-
-          <label>
-            Title
-
-            <input
-              required
-              value={form.title}
-              onChange={(event) =>
-                updateForm('title', event.target.value)
-              }
-              placeholder={
-                isProject
-                  ? 'e.g. Smart Dustbin'
-                  : isLecture
-                    ? 'e.g. Arduino Basics'
-                    : 'e.g. Robotics Foundations'
-              }
-            />
-          </label>
-
-          <label>
-            Category
-
-            <input
-              value={form.category}
-              onChange={(event) =>
-                updateForm('category', event.target.value)
-              }
-              placeholder="Basics, Sensors, Robotics..."
-            />
-          </label>
-
-          {isLecture && (
-            <label>
-              YouTube URL or video ID
-
-              <input
-                required
-                value={form.url}
-                onChange={(event) =>
-                  updateForm('url', event.target.value)
-                }
-                placeholder="https://www.youtube.com/watch?v=..."
-              />
-            </label>
-          )}
-
-          {isProject && (
-            <label>
-              Project slug preview
-
-              <input
-                value={slugify(form.title)}
-                readOnly
-                placeholder="Generated from title"
-              />
-            </label>
-          )}
-
-          <div className="form-actions">
-            <button
-              type="button"
-              className="button button-secondary"
-              onClick={() => setShowForm(false)}
-            >
-              Cancel
-            </button>
-
-            <button
-              className="button button-primary"
-              type="submit"
-            >
-              Preview submit
-            </button>
-          </div>
-        </form>
-      )}
-
-      <section className="admin-panel admin-table-panel">
-        <div className="admin-panel-head">
-          <div>
-            <h2>Current content</h2>
-
-            <p>
-              {rows.length} entries from local data files.
-            </p>
-          </div>
-        </div>
-
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Slug</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.slug}>
-                  <td>
-                    <b>{row.title}</b>
-                  </td>
-
-                  <td>{row.subtitle}</td>
-
-                  <td>
-                    <code>{row.slug}</code>
-                  </td>
-
-                  <td>
-                    <span className="status-draft">
-                      Demo data
-                    </span>
-                  </td>
-                </tr>
-              ))}
-
-              {rows.length === 0 && (
-                <tr>
-                  <td colSpan="4">
-                    No entries available yet.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </>
-  );
-}
-
-function AdminLogin() {
-  const navigate = useNavigate();
-
-  const [email, setEmail] = useState('');
-
-  return (
-    <div className="admin-login-wrap">
-      <form
-        className="admin-login-card"
-        onSubmit={(event) => {
-          event.preventDefault();
-
-          // Preview only. This does not authenticate the user.
-          navigate('/admin');
-        }}
-      >
-        <div className="admin-login-icon">
-          <LogIn size={22} />
-        </div>
-
-        <div className="eyebrow">STEMNOID CREATOR STUDIO</div>
-
-        <h1>Welcome back</h1>
-
-        <p>
-          This login is a UI preview. Real account verification
-          has not been connected yet.
-        </p>
-
-        <label>
-          Email
-
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@example.com"
-          />
-        </label>
-
-        <label>
-          Password
-
-          <input
-            type="password"
-            required
-            minLength={4}
-            placeholder="Enter 4 or more characters"
-          />
-        </label>
-
-        <button
-          className="button button-primary button-full"
-          type="submit"
-        >
-          Preview dashboard
-          <ArrowUpRight size={15} />
-        </button>
-
-        <div className="login-warning">
-          <ShieldAlert size={15} />
-
-          Do not use this preview as real account security.
-        </div>
-      </form>
+    <div className="sa-workspace">
+      <header className="sa-topbar"><div className="sa-topbar-left"><button className="sa-mobile-menu sa-icon-button" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button><div className="sa-breadcrumb"><span>STEMNOID</span><ChevronRight size={14} /><strong>{title}</strong></div></div><div className="sa-topbar-actions"><button className="sa-command-search" onClick={() => setCommandOpen(true)}><Search size={16} /><span>Quick search</span><kbd>⌘ K</kbd></button><span className="sa-topbar-divider" /><button className="sa-icon-button sa-theme-button" onClick={() => setTheme((value) => value === 'dark' ? 'light' : 'dark')} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button><button className="sa-profile-chip" onClick={() => window.location.assign('/admin/profile')}><span className="sa-avatar">{(data.profile.name || 'A').slice(0, 1).toUpperCase()}</span><span className="sa-profile-name"><b>{data.profile.name || 'Admin'}</b><small>Administrator</small></span><ChevronDown size={14} /></button></div></header>
+      <main className="sa-main"><Routes>
+        <Route index element={<DashboardPage notify={notify} />} />
+        <Route path="projects" element={<ProjectsPage notify={notify} />} />
+        <Route path="projects/new" element={<ProjectEditor notify={notify} />} />
+        <Route path="projects/:projectId/edit" element={<ProjectEditor notify={notify} />} />
+        <Route path="categories" element={<CategoriesPage notify={notify} />} />
+        <Route path="media" element={<MediaPage notify={notify} />} />
+        <Route path="settings" element={<SettingsPage notify={notify} />} />
+        <Route path="profile" element={<ProfilePage notify={notify} />} />
+        <Route path="login" element={<DashboardPage notify={notify} />} />
+        <Route path="*" element={<DashboardPage notify={notify} />} />
+      </Routes></main>
+      <footer className="sa-footer"><span>STEMNOID Admin Studio</span><span><span className="sa-footer-dot" /> Local demo mode <i>·</i> Not connected to a backend</span></footer>
     </div>
-  );
+    {commandOpen && <QuickSearch onClose={() => setCommandOpen(false)} />}
+    <Toast message={toast || (data.storageWarning ? 'Browser storage is unavailable or full. Changes may not persist.' : '')} onClose={clearToast} />
+  </div>;
+}
+
+function DashboardPage({ notify }) {
+  const data = useAdminData();
+  const navigate = useNavigate();
+  const levels = useMemo(() => data.projects.reduce((acc, project) => { const key = project.level || 'Unspecified'; acc[key] = (acc[key] || 0) + 1; return acc; }, {}), [data.projects]);
+  const recentProjects = data.projects.slice(0, 5);
+  return <div className="sa-page"><PageHeader eyebrow="OVERVIEW / WORKSPACE" title="Good to see you, Admin" description="Manage your STEM learning content and keep your project library organised." action={<button className="sa-button sa-button-primary" onClick={() => navigate('/admin/projects/new')}><Plus size={17} /> New project</button>} />
+    <div className="sa-welcome-strip"><div className="sa-welcome-art"><div className="sa-orbit sa-orbit-one"/><div className="sa-orbit sa-orbit-two"/><Code2 size={34}/></div><div className="sa-welcome-copy"><span className="sa-welcome-kicker">YOUR CREATOR WORKSPACE</span><h2>Build something worth learning.</h2><p>Organise projects, refine learning resources and prepare your next STEM lesson.</p></div><div className="sa-welcome-meta"><span className="sa-live-dot"/> Demo workspace active</div></div>
+    <div className="sa-stat-grid"><StatCard icon={Code2} label="Arduino projects" value={data.projects.length} note="In your local library" tone="blue"/><StatCard icon={FolderKanban} label="Categories" value={data.categories.length} note="Project groupings" tone="violet"/><StatCard icon={FileImage} label="Media assets" value={data.media.length} note="Local media references" tone="green"/><StatCard icon={BookOpen} label="Learning paths" value={data.courses.length} note="Demo learning content" tone="amber"/></div>
+    <div className="sa-dashboard-grid"><Panel title="Recent projects" subtitle="Quick access to your project library" action={<Link className="sa-text-link" to="/admin/projects">View all <ArrowUpRight size={15}/></Link>}><div className="sa-recent-list">{recentProjects.map((project) => <div className="sa-recent-row" key={project.id}><div className="sa-project-thumb">{project.image ? <img src={project.image} alt=""/> : <Code2 size={19}/>}</div><div className="sa-recent-info"><b>{project.title}</b><span>{project.category || 'Uncategorised'} <i>·</i> {project.level || 'Level not set'}</span></div><button className="sa-icon-button sa-small-icon" onClick={() => navigate(`/admin/projects/${project.id}/edit`)} aria-label={`Edit ${project.title}`}><Pencil size={15}/></button></div>)}{!recentProjects.length && <EmptyState icon={Code2} title="No projects yet" description="Add your first Arduino project to get started." action={<Link className="sa-button sa-button-primary" to="/admin/projects/new">Add project</Link>}/>}</div></Panel>
+      <Panel title="Library snapshot" subtitle="Current content distribution"><div className="sa-level-list">{Object.entries(levels).map(([label, count], index) => <div className="sa-level-row" key={label}><div className="sa-level-label"><span className={`sa-level-dot level-${index % 4}`}/><span>{label}</span><b>{count}</b></div><div className="sa-progress-track"><span style={{ width: `${Math.max(4, (count / Math.max(data.projects.length, 1)) * 100)}%` }}/></div></div>)}{!Object.keys(levels).length && <p className="sa-muted-copy">Add projects to see the distribution.</p>}<div className="sa-snapshot-foot"><span>Source</span><b>Browser demo data</b></div></div></Panel>
+    </div>
+    <Panel title="Quick actions" subtitle="Common tasks in your workspace"><div className="sa-quick-grid"><button className="sa-quick-action" onClick={() => navigate('/admin/projects/new')}><span className="sa-quick-icon blue"><FilePlus2 size={19}/></span><span><b>Create a project</b><small>Add components, wiring and code</small></span><ArrowUpRight size={16}/></button><button className="sa-quick-action" onClick={() => navigate('/admin/categories')}><span className="sa-quick-icon violet"><Boxes size={19}/></span><span><b>Organise categories</b><small>Keep the library easy to browse</small></span><ArrowUpRight size={16}/></button><button className="sa-quick-action" onClick={() => navigate('/admin/media')}><span className="sa-quick-icon green"><ImagePlus size={19}/></span><span><b>Manage media</b><small>Review image references</small></span><ArrowUpRight size={16}/></button></div></Panel>
+    <div className="sa-note-banner"><CircleHelp size={18}/><div><b>Prototype mode</b><p>Changes are saved to localStorage in this browser. They are not published to the public website or synced to a database.</p></div><button className="sa-text-link" onClick={() => notify('Demo mode keeps changes in this browser only.')}>Got it</button></div>
+  </div>;
+}
+
+function ProjectsPage({ notify }) {
+  const { projects, categories, deleteProject } = useAdminData();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState(''); const [category, setCategory] = useState(''); const [level, setLevel] = useState(''); const [deleteTarget, setDeleteTarget] = useState(null);
+  const filtered = projects.filter((project) => `${project.title} ${project.category} ${project.summary || ''}`.toLowerCase().includes(search.toLowerCase()) && (!category || project.category === category) && (!level || project.level === level));
+  const levels = [...new Set(projects.map((project) => project.level).filter(Boolean))].sort();
+  return <div className="sa-page"><PageHeader eyebrow="CONTENT / PROJECT LIBRARY" title="Arduino Projects" description="Manage your project guides, components, circuit details and code." action={<button className="sa-button sa-button-primary" onClick={() => navigate('/admin/projects/new')}><Plus size={17}/> Add project</button>}/>
+    <div className="sa-inline-stats"><span><b>{projects.length}</b> total projects</span><span><b>{filtered.length}</b> shown</span><span><span className="sa-demo-dot"/> Local demo data</span></div>
+    <Panel className="sa-table-panel"><div className="sa-table-toolbar"><SearchBox value={search} onChange={setSearch} placeholder="Search projects by name..."/><div className="sa-filter-group"><span><SlidersHorizontal size={15}/> Filters</span><SelectField value={category} onChange={setCategory} placeholder="All categories" options={categories.map((item) => ({ value: item.name, label: item.name }))}/><SelectField value={level} onChange={setLevel} placeholder="All levels" options={levels.map((item) => ({ value: item, label: item }))}/>{(category || level || search) && <button className="sa-clear-filters" onClick={() => {setSearch('');setCategory('');setLevel('');}}>Clear</button>}</div></div>
+      <div className="sa-table-wrap"><table className="sa-table"><thead><tr><th>PROJECT</th><th>CATEGORY</th><th>LEVEL</th><th>DURATION</th><th>STATUS</th><th><span className="sa-sr-only">Actions</span></th></tr></thead><tbody>{filtered.map((project) => <tr key={project.id}><td><div className="sa-project-cell"><div className="sa-table-thumb">{project.image ? <img src={project.image} alt=""/> : <Code2 size={18}/>}</div><div><b>{project.title}</b><small>{project.slug || 'No slug'}{project.summary ? ` · ${project.summary}` : ''}</small></div></div></td><td><span className="sa-category-tag">{project.category || 'Uncategorised'}</span></td><td><span className={`sa-level-tag ${String(project.level || '').toLowerCase()}`}>{project.level || 'Not set'}</span></td><td>{project.duration || '—'}</td><td><span className="sa-status"><span/> Demo entry</span></td><td><div className="sa-row-actions"><button className="sa-icon-button" onClick={() => navigate(`/admin/projects/${project.id}/edit`)} title="Edit project"><Pencil size={15}/></button><a className="sa-icon-button" href={`/projects/${project.slug}`} target="_blank" rel="noreferrer" title="Preview public page"><Eye size={15}/></a><button className="sa-icon-button sa-danger-hover" onClick={() => setDeleteTarget(project)} title="Delete project"><Trash2 size={15}/></button></div></td></tr>)}{!filtered.length && <tr><td colSpan="6"><EmptyState icon={Search} title="No matching projects" description="Try another search or clear the filters." action={<button className="sa-button sa-button-secondary" onClick={() => {setSearch('');setCategory('');setLevel('');}}>Clear filters</button>}/></td></tr>}</tbody></table></div>
+      <div className="sa-table-footer"><span>Showing <b>{filtered.length}</b> of <b>{projects.length}</b> projects</span><span className="sa-table-footer-note">Demo changes stay in this browser</span></div>
+    </Panel>
+    {deleteTarget && <Modal title="Delete project?" description="This removes the project from this browser's demo data only." onClose={() => setDeleteTarget(null)}><div className="sa-confirm-body"><div className="sa-confirm-icon"><Trash2 size={20}/></div><p>Are you sure you want to delete <b>{deleteTarget.title}</b>? This action can be undone only by resetting demo data.</p></div><div className="sa-modal-actions"><button className="sa-button sa-button-secondary" onClick={() => setDeleteTarget(null)}>Cancel</button><button className="sa-button sa-button-danger" onClick={() => {deleteProject(deleteTarget.id);notify('Project deleted from demo data.');setDeleteTarget(null);}}>Delete project</button></div></Modal>}
+  </div>;
+}
+
+const blankProject = { title: '', slug: '', category: 'Arduino Basics', level: 'Beginner', duration: '30 min', image: '', summary: '', introduction: '', objectivesText: '', componentsText: '', wiringText: '', stepsText: '', code: '', troubleshootingText: '', videoId: '' };
+function toEditorProject(project) { return { ...blankProject, ...project, objectivesText: (project.objectives || []).join('\n'), componentsText: (project.components || []).map((item) => `${item.name} | ${item.quantity ?? 1} | ${item.purpose || ''}`).join('\n'), wiringText: (project.wiringTable || []).map((item) => `${item.arduinoPin} | ${item.componentPin} | ${item.description || ''}`).join('\n'), stepsText: (project.steps || []).map((item) => `${item.title} | ${item.description || ''}`).join('\n'), troubleshootingText: (project.troubleshooting || []).map((item) => `${item.problem} | ${item.solution || ''}`).join('\n') }; }
+function lines(text, columns) { return text.split('\n').map((line) => line.split('|').map((part) => part.trim())).filter((parts) => parts.some(Boolean)).map((parts) => Object.fromEntries(columns.map((column, index) => [column, parts[index] || '']))); }
+function ProjectEditor({ notify }) {
+  const { projectId } = useParams(); const data = useAdminData(); const navigate = useNavigate();
+  const original = data.projects.find((item) => item.id === projectId);
+  const [form, setForm] = useState(() => toEditorProject(original || { ...blankProject })); const [activeSection, setActiveSection] = useState('basics'); const [showPreview, setShowPreview] = useState(false);
+  useEffect(() => { setForm(toEditorProject(original || { ...blankProject })); }, [projectId]);
+  const isEdit = Boolean(projectId);
+  const update = (field, value) => setForm((current) => ({ ...current, [field]: value, ...(field === 'title' && !isEdit ? { slug: value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') } : {}) }));
+  const save = (event) => { event.preventDefault(); if (!form.title.trim()) return; const payload = { ...original, ...form, id: original?.id, title: form.title.trim(), slug: form.slug || form.title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), objectives: form.objectivesText.split('\n').map((s) => s.trim()).filter(Boolean), components: lines(form.componentsText, ['name', 'quantity', 'purpose']).map((item) => ({ ...item, quantity: Number(item.quantity) || 1 })), wiringTable: lines(form.wiringText, ['arduinoPin', 'componentPin', 'description']), steps: lines(form.stepsText, ['title', 'description']), troubleshooting: lines(form.troubleshootingText, ['problem', 'solution']), sections: original?.sections || [], codeNotes: original?.codeNotes || [], faqs: original?.faqs || [] }; delete payload.objectivesText; delete payload.componentsText; delete payload.wiringText; delete payload.stepsText; delete payload.troubleshootingText; data.saveProject(payload); notify(isEdit ? 'Project updated in local demo data.' : 'Project added to local demo data.'); navigate('/admin/projects'); };
+  if (isEdit && !original) return <div className="sa-page"><PageHeader eyebrow="PROJECT LIBRARY" title="Project not found" description="This project may have been removed from demo data." action={<button className="sa-button sa-button-secondary" onClick={() => navigate('/admin/projects')}>Back to projects</button>}/></div>;
+  const sections = [{id:'basics',label:'Basic information',number:'01'},{id:'components',label:'Components',number:'02'},{id:'wiring',label:'Wiring connections',number:'03'},{id:'steps',label:'Build instructions',number:'04'},{id:'code',label:'Arduino code',number:'05'},{id:'troubleshooting',label:'Troubleshooting',number:'06'}];
+  return <div className="sa-page"><PageHeader eyebrow="CONTENT / PROJECT EDITOR" title={isEdit ? 'Edit project' : 'Create a project'} description="Build a clear, student-friendly project guide. Fields are mapped to STEMNOID's existing project data shape." action={<button className="sa-button sa-button-secondary" onClick={() => navigate('/admin/projects')}><ChevronLeft size={16}/> Back to projects</button>}/>
+    <form onSubmit={save} className="sa-editor-layout"><div className="sa-editor-main"><Panel title="Project content" subtitle="Complete the sections that apply to this build."><div className="sa-editor-tabs">{sections.map((section) => <button type="button" key={section.id} className={activeSection === section.id ? 'active' : ''} onClick={() => setActiveSection(section.id)}><span>{section.number}</span>{section.label}</button>)}</div>
+      {activeSection === 'basics' && <div className="sa-form-grid"><Field label="Project title" className="sa-field-full"><input required value={form.title} onChange={(event) => update('title', event.target.value)} placeholder="e.g. Smart Dustbin with Arduino"/></Field><Field label="URL slug" hint="Used in the public project URL"><input value={form.slug} onChange={(event) => update('slug', event.target.value)} placeholder="smart-dustbin-arduino"/></Field><Field label="Category"><SelectField value={form.category} onChange={(value) => update('category', value)} options={data.categories.map((item) => ({value:item.name,label:item.name}))} placeholder="Choose category"/></Field><Field label="Difficulty"><SelectField value={form.level} onChange={(value) => update('level', value)} options={['Beginner','Intermediate','Advanced'].map((value) => ({value,label:value}))}/></Field><Field label="Estimated duration"><input value={form.duration} onChange={(event) => update('duration', event.target.value)} placeholder="30 min"/></Field><Field label="Cover image URL" className="sa-field-full" hint="Paste an image URL for this demo. Persistent uploads will be connected later."><input value={form.image} onChange={(event) => update('image', event.target.value)} placeholder="https://..."/></Field>{form.image && <div className="sa-image-preview sa-field-full"><img src={form.image} alt="Project cover preview" onError={(event) => {event.currentTarget.style.display='none';}}/><span>Cover preview</span></div>}<Field label="Short summary" className="sa-field-full"><textarea rows="3" value={form.summary} onChange={(event) => update('summary', event.target.value)} placeholder="What will the learner build?"/></Field><Field label="Introduction" className="sa-field-full"><textarea rows="4" value={form.introduction} onChange={(event) => update('introduction', event.target.value)} placeholder="Explain the project and what students will learn."/></Field><Field label="Learning objectives" className="sa-field-full" hint="One objective per line"><textarea rows="4" value={form.objectivesText} onChange={(event) => update('objectivesText', event.target.value)} placeholder={'Understand digital output pins\nLearn to use a sensor\nTest the circuit safely'}/></Field></div>}
+      {activeSection === 'components' && <div className="sa-form-grid"><Field label="Required components" className="sa-field-full" hint="One component per line: Name | Quantity | Purpose"><textarea className="sa-mono-textarea" rows="12" value={form.componentsText} onChange={(event) => update('componentsText', event.target.value)} placeholder={'Arduino Uno | 1 | Main controller\nLED | 1 | Visual output\n220Ω resistor | 1 | Limits current'}/></Field><div className="sa-help-callout"><CircleHelp size={17}/><span>Keep component names and quantities clear. Use the pipe character <code>|</code> to separate fields.</span></div></div>}
+      {activeSection === 'wiring' && <div className="sa-form-grid"><Field label="Wiring / pin connections" className="sa-field-full" hint="One connection per line: Arduino pin | Component pin | Description"><textarea className="sa-mono-textarea" rows="12" value={form.wiringText} onChange={(event) => update('wiringText', event.target.value)} placeholder={'D13 | LED anode (+) | Connect through a suitable resistor\nGND | LED cathode (-) | Connect to ground'}/></Field><div className="sa-help-callout"><CircleHelp size={17}/><span>Write connections in a consistent, easy-to-follow order. Include safety notes in the description.</span></div></div>}
+      {activeSection === 'steps' && <div className="sa-form-grid"><Field label="Build instructions" className="sa-field-full" hint="One step per line: Step title | Step description"><textarea className="sa-mono-textarea" rows="14" value={form.stepsText} onChange={(event) => update('stepsText', event.target.value)} placeholder={'Prepare the components | Keep all components ready\nConnect the circuit | Follow the wiring table\nUpload and test | Select the correct board and port'}/></Field></div>}
+      {activeSection === 'code' && <div className="sa-form-grid"><Field label="Arduino sketch" className="sa-field-full" hint="Arduino code is stored as text in local demo state"><textarea className="sa-code-editor" spellCheck="false" rows="18" value={form.code || ''} onChange={(event) => update('code', event.target.value)} placeholder={'void setup() {\n  // setup pins\n}\n\nvoid loop() {\n  // your code\n}'}/></Field><Field label="YouTube video ID (optional)" className="sa-field-full"><input value={form.videoId || ''} onChange={(event) => update('videoId', event.target.value)} placeholder="Video ID or leave blank"/></Field></div>}
+      {activeSection === 'troubleshooting' && <div className="sa-form-grid"><Field label="Common issues and solutions" className="sa-field-full" hint="One issue per line: Problem | Solution"><textarea className="sa-mono-textarea" rows="12" value={form.troubleshootingText} onChange={(event) => update('troubleshootingText', event.target.value)} placeholder={'LED does not turn on | Check polarity and resistor\nBoard not detected | Check USB cable and selected port'}/></Field></div>}
+      <div className="sa-editor-bottom"><span><ShieldCheck size={15}/> Demo changes save in this browser only</span><div><button type="button" className="sa-button sa-button-secondary" onClick={() => setShowPreview(true)}><Eye size={16}/> Preview</button><button type="submit" className="sa-button sa-button-primary"><Save size={16}/> {isEdit ? 'Save changes' : 'Create project'}</button></div></div>
+    </Panel></div><aside className="sa-editor-aside"><Panel title="Project checklist" subtitle="Helpful before saving"><div className="sa-checklist">{[{label:'Project title',done:Boolean(form.title.trim())},{label:'Category selected',done:Boolean(form.category)},{label:'Short summary',done:Boolean(form.summary.trim())},{label:'Components listed',done:Boolean(form.componentsText.trim())},{label:'Build steps added',done:Boolean(form.stepsText.trim())},{label:'Arduino code added',done:Boolean(form.code?.trim())}].map((item) => <div key={item.label} className={item.done?'done':''}><span>{item.done?<Check size={13}/>:<span/>}</span>{item.label}</div>)}</div></Panel><Panel title="Public preview" subtitle="Approximate content summary"><div className="sa-preview-card">{form.image ? <img src={form.image} alt=""/> : <div className="sa-preview-placeholder"><Code2 size={26}/></div>}<div className="sa-preview-card-body"><span className="sa-category-tag">{form.category || 'Category'}</span><h3>{form.title || 'Your project title'}</h3><p>{form.summary || 'A short description will appear here.'}</p><div className="sa-preview-meta"><span>{form.level}</span><span>·</span><span>{form.duration || 'Duration'}</span></div></div></div></Panel><div className="sa-help-callout"><CircleHelp size={17}/><span>Existing project fields are preserved where possible. Rich section editing can be expanded later.</span></div></aside></form>
+    {showPreview && <Modal title="Project preview" description="A quick preview of the current form values." onClose={() => setShowPreview(false)} wide><div className="sa-preview-modal">{form.image && <img src={form.image} alt="Project cover"/>}<span className="sa-category-tag">{form.category}</span><h2>{form.title || 'Untitled project'}</h2><p>{form.summary || 'No summary entered yet.'}</p><div className="sa-preview-meta"><span>{form.level}</span><span>·</span><span>{form.duration}</span></div><h3>Introduction</h3><p>{form.introduction || 'No introduction entered yet.'}</p><h3>Arduino code</h3><pre>{form.code || '// No code entered yet'}</pre></div></Modal>}
+  </div>;
+}
+
+function CategoriesPage({ notify }) {
+  const { categories, projects, saveCategory, deleteCategory } = useAdminData();
+  const [search, setSearch] = useState(''); const [editing, setEditing] = useState(null); const [form, setForm] = useState({ name: '', description: '' }); const [deleteTarget, setDeleteTarget] = useState(null);
+  const filtered = categories.filter((item) => `${item.name} ${item.description || ''}`.toLowerCase().includes(search.toLowerCase()));
+  const openNew = () => { setEditing({}); setForm({name:'',description:''}); }; const openEdit = (item) => { setEditing(item); setForm({name:item.name,description:item.description || ''}); };
+  const submit = (event) => { event.preventDefault(); if (!form.name.trim()) return; if (categories.some((item) => item.name.toLowerCase() === form.name.trim().toLowerCase() && item.id !== editing?.id)) { notify('A category with this name already exists.'); return; } saveCategory({ ...editing, ...form, name: form.name.trim() }); notify(editing?.id ? 'Category updated.' : 'Category added.'); setEditing(null); };
+  return <div className="sa-page"><PageHeader eyebrow="CONTENT / ORGANISATION" title="Categories" description="Group Arduino projects into clear, discoverable learning topics." action={<button className="sa-button sa-button-primary" onClick={openNew}><Plus size={17}/> New category</button>}/><div className="sa-inline-stats"><span><b>{categories.length}</b> categories</span><span><b>{projects.length}</b> projects across library</span></div><Panel className="sa-table-panel"><div className="sa-table-toolbar"><SearchBox value={search} onChange={setSearch} placeholder="Search categories..."/><span className="sa-toolbar-note">Category changes persist in localStorage</span></div><div className="sa-table-wrap"><table className="sa-table"><thead><tr><th>CATEGORY</th><th>DESCRIPTION</th><th>PROJECTS</th><th>ACTIONS</th></tr></thead><tbody>{filtered.map((item,index) => <tr key={item.id}><td><div className="sa-category-cell"><span className={`sa-category-symbol cat-${index%5}`}><FolderKanban size={17}/></span><b>{item.name}</b></div></td><td>{item.description || '—'}</td><td><span className="sa-count-pill">{projects.filter((project) => project.category === item.name).length}</span></td><td><div className="sa-row-actions"><button className="sa-icon-button" onClick={() => openEdit(item)} title="Edit"><Pencil size={15}/></button><button className="sa-icon-button sa-danger-hover" onClick={() => setDeleteTarget(item)} title="Delete"><Trash2 size={15}/></button></div></td></tr>)}{!filtered.length && <tr><td colSpan="4"><EmptyState icon={FolderKanban} title="No categories found" description="Create a category or adjust your search." action={<button className="sa-button sa-button-primary" onClick={openNew}>New category</button>}/></td></tr>}</tbody></table></div></Panel>
+    {editing !== null && <Modal title={editing.id ? 'Edit category' : 'Create category'} description="Categories are stored as local demo data." onClose={() => setEditing(null)}><form onSubmit={submit} className="sa-modal-form"><Field label="Category name"><input autoFocus required value={form.name} onChange={(event) => setForm((current) => ({...current,name:event.target.value}))} placeholder="e.g. Robotics"/></Field><Field label="Description"><textarea rows="3" value={form.description} onChange={(event) => setForm((current) => ({...current,description:event.target.value}))} placeholder="What projects belong here?"/></Field><div className="sa-modal-actions"><button type="button" className="sa-button sa-button-secondary" onClick={() => setEditing(null)}>Cancel</button><button className="sa-button sa-button-primary" type="submit"><Save size={16}/> Save category</button></div></form></Modal>}
+    {deleteTarget && <Modal title="Delete category?" description="Projects assigned to this category will keep their current category text." onClose={() => setDeleteTarget(null)}><p className="sa-modal-copy">Delete <b>{deleteTarget.name}</b> from the demo category list?</p><div className="sa-modal-actions"><button className="sa-button sa-button-secondary" onClick={() => setDeleteTarget(null)}>Cancel</button><button className="sa-button sa-button-danger" onClick={() => {deleteCategory(deleteTarget.id);notify('Category deleted.');setDeleteTarget(null);}}>Delete category</button></div></Modal>}
+  </div>;
+}
+
+function MediaPage({ notify }) {
+  const { media, addMedia, deleteMedia } = useAdminData(); const [search, setSearch] = useState(''); const [url, setUrl] = useState(''); const [name, setName] = useState(''); const [view, setView] = useState('grid'); const [selected, setSelected] = useState(null);
+  const filtered = media.filter((item) => `${item.name} ${item.usedBy || ''}`.toLowerCase().includes(search.toLowerCase()));
+  const addByUrl = (event) => { event.preventDefault(); if (!url.trim()) return; addMedia({name:name.trim() || url.split('/').pop().split('?')[0] || 'External image',url:url.trim(),type:'image',usedBy:'Not assigned'});setUrl('');setName('');notify('Media reference added to local demo library.'); };
+  return <div className="sa-page"><PageHeader eyebrow="ASSETS / MEDIA LIBRARY" title="Media Library" description="Keep image references organised for project covers and learning content." action={<label className="sa-button sa-button-primary sa-upload-button"><UploadCloud size={17}/> Add image URL<input type="file" accept="image/*" onChange={(event) => { const file = event.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { addMedia({name:file.name,url:String(reader.result),type:'image',usedBy:'Local preview'});notify('Image added for this browser session.'); };reader.readAsDataURL(file);event.target.value=''; }}/></label>}/>
+    <Panel title="Add media by URL" subtitle="This prototype stores a reference or a local preview in this browser."><form className="sa-media-url-form" onSubmit={addByUrl}><Field label="Image URL"><input value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://example.com/project-image.jpg"/></Field><Field label="Display name"><input value={name} onChange={(event) => setName(event.target.value)} placeholder="Optional image name"/></Field><button className="sa-button sa-button-primary" type="submit" disabled={!url.trim()}><Plus size={16}/> Add reference</button></form></Panel>
+    <Panel className="sa-media-panel" title="All media" subtitle={`${filtered.length} assets in the local library`}><div className="sa-table-toolbar"><SearchBox value={search} onChange={setSearch} placeholder="Search media..."/><div className="sa-view-switch"><button className={view==='grid'?'active':''} onClick={() => setView('grid')} type="button">Grid</button><button className={view==='list'?'active':''} onClick={() => setView('list')} type="button">List</button></div></div>{view === 'grid' ? <div className="sa-media-grid">{filtered.map((item) => <article className="sa-media-card" key={item.id}><button className="sa-media-image" onClick={() => setSelected(item)}><img src={item.url} alt={item.name} onError={(event) => {event.currentTarget.style.display='none';}}/><span><Eye size={18}/></span></button><div className="sa-media-info"><b title={item.name}>{item.name}</b><small>{item.usedBy || 'Unassigned'}</small><div><button className="sa-text-link" onClick={() => {navigator.clipboard?.writeText(item.url);notify('Image URL copied if clipboard access is available.');}}>Copy URL</button><button className="sa-icon-button sa-danger-hover" onClick={() => {if(window.confirm(`Remove ${item.name} from the demo library?`)){deleteMedia(item.id);notify('Media removed.');}}} aria-label="Remove media"><Trash2 size={14}/></button></div></div></article>)}</div> : <div className="sa-table-wrap"><table className="sa-table"><thead><tr><th>ASSET</th><th>USED BY</th><th>TYPE</th><th>ACTIONS</th></tr></thead><tbody>{filtered.map((item) => <tr key={item.id}><td><div className="sa-project-cell"><div className="sa-table-thumb"><img src={item.url} alt=""/></div><b>{item.name}</b></div></td><td>{item.usedBy || 'Unassigned'}</td><td><span className="sa-category-tag">Image</span></td><td><div className="sa-row-actions"><button className="sa-icon-button" onClick={() => setSelected(item)}><Eye size={15}/></button><button className="sa-icon-button sa-danger-hover" onClick={() => deleteMedia(item.id)}><Trash2 size={15}/></button></div></td></tr>)}</tbody></table></div>}{!filtered.length && <EmptyState icon={ImagePlus} title="No media found" description="Add an image URL or select a local image preview."/>}</Panel>
+    <div className="sa-note-banner"><UploadCloud size={18}/><div><b>Storage note</b><p>Selected local images are stored as browser data and may use substantial localStorage space. For production, use file storage and save only the resulting URL.</p></div></div>
+    {selected && <Modal title={selected.name} description={selected.usedBy || 'Media preview'} onClose={() => setSelected(null)} wide><div className="sa-media-modal-image"><img src={selected.url} alt={selected.name}/></div><div className="sa-media-url-display"><code>{selected.url.slice(0,240)}{selected.url.length>240?'…':''}</code><button className="sa-button sa-button-secondary" onClick={() => {navigator.clipboard?.writeText(selected.url);notify('Image URL copied if clipboard access is available.');}}><CopyIcon/> Copy URL</button></div></Modal>}
+  </div>;
+}
+function CopyIcon() { return <FileCode2 size={15}/>; }
+
+function SettingsPage({ notify }) {
+  const { settings, updateSettings, resetDemo } = useAdminData(); const [form, setForm] = useState(settings); const [confirmReset, setConfirmReset] = useState(false);
+  useEffect(() => setForm(settings), [settings]); const update = (field,value) => setForm((current) => ({...current,[field]:value}));
+  return <div className="sa-page"><PageHeader eyebrow="CONFIGURATION / WEBSITE" title="Website Settings" description="Manage demo branding and homepage copy. These values are not published to the public site." action={<button className="sa-button sa-button-primary" onClick={() => {updateSettings(form);notify('Website settings saved to local demo data.');}}><Save size={16}/> Save settings</button>}/>
+    <div className="sa-settings-layout"><div className="sa-settings-main"><Panel title="General information" subtitle="The basic identity shown in this admin preview"><div className="sa-form-grid"><Field label="Website name"><input value={form.siteName || ''} onChange={(event) => update('siteName',event.target.value)}/></Field><Field label="Tagline"><input value={form.tagline || ''} onChange={(event) => update('tagline',event.target.value)}/></Field><Field label="Homepage headline" className="sa-field-full"><input value={form.homepageTitle || ''} onChange={(event) => update('homepageTitle',event.target.value)}/></Field><Field label="YouTube channel URL" className="sa-field-full"><input value={form.youtubeUrl || ''} onChange={(event) => update('youtubeUrl',event.target.value)}/></Field></div></Panel><Panel title="Branding" subtitle="Choose a primary accent for the admin preview"><div className="sa-color-options">{['#3b82f6','#8b5cf6','#14b8a6','#f97316','#e11d48'].map((color) => <button key={color} className={form.primaryColor===color?'selected':''} style={{'--swatch':color}} onClick={() => update('primaryColor',color)} type="button" aria-label={`Choose ${color}`}><span/>{form.primaryColor===color && <Check size={16}/>}</button>)}<Field label="Custom hex color"><input value={form.primaryColor || ''} onChange={(event) => update('primaryColor',event.target.value)} pattern="^#[0-9a-fA-F]{6}$"/></Field></div></Panel><Panel title="Demo data" subtitle="Reset only the Admin Panel's browser demo data"><div className="sa-reset-row"><div><b>Reset Admin demo</b><p>Restore starter projects, categories, media and settings. This does not alter source files or database data.</p></div><button className="sa-button sa-button-danger-outline" onClick={() => setConfirmReset(true)}><RotateCcw size={16}/> Reset demo data</button></div></Panel></div><aside className="sa-settings-aside"><Panel title="Brand preview" subtitle="Preview of your selected settings"><div className="sa-brand-preview"><div className="sa-brand-preview-mark" style={{background:form.primaryColor}}><Command size={22}/></div><h3>{form.siteName || 'Website name'}</h3><p>{form.tagline || 'Your tagline'}</p><div className="sa-brand-preview-banner" style={{'--preview-accent':form.primaryColor}}><small>HOMEPAGE HEADLINE</small><b>{form.homepageTitle || 'Your homepage headline'}</b></div></div></Panel><div className="sa-help-callout"><Globe2 size={17}/><span>These settings are stored locally. Connecting them to the public website requires a shared data source later.</span></div></aside></div>
+    {confirmReset && <Modal title="Reset demo data?" description="Your current browser demo changes will be replaced by starter data." onClose={() => setConfirmReset(false)}><p className="sa-modal-copy">This will reset projects, categories, media, settings and profile in the Admin demo state. Continue?</p><div className="sa-modal-actions"><button className="sa-button sa-button-secondary" onClick={() => setConfirmReset(false)}>Cancel</button><button className="sa-button sa-button-danger" onClick={() => {resetDemo();setConfirmReset(false);notify('Admin demo data has been reset.');}}>Reset demo data</button></div></Modal>}
+  </div>;
+}
+
+function ProfilePage({ notify }) {
+  const { profile, updateProfile } = useAdminData(); const [form, setForm] = useState(profile); useEffect(() => setForm(profile), [profile]); const update = (field,value) => setForm((current) => ({...current,[field]:value}));
+  const submit = (event) => {event.preventDefault();updateProfile(form);notify('Profile saved to local demo data.');};
+  return <div className="sa-page"><PageHeader eyebrow="ACCOUNT / PROFILE" title="Admin Profile" description="Manage the profile details shown in your local admin workspace." action={<button className="sa-button sa-button-primary" onClick={() => {updateProfile(form);notify('Profile saved to local demo data.');}}><Save size={16}/> Save profile</button>}/><div className="sa-profile-layout"><div className="sa-profile-card"><div className="sa-profile-cover"><div className="sa-profile-avatar-large">{(form.name || 'A').slice(0,1).toUpperCase()}</div></div><div className="sa-profile-card-body"><h2>{form.name || 'Admin name'}</h2><p>{form.email || 'admin@example.com'}</p><span className="sa-role-tag"><ShieldCheck size={14}/>{form.role || 'Administrator'}</span><div className="sa-profile-divider"/><div className="sa-profile-stat"><span>Workspace</span><b>STEMNOID Admin Studio</b></div><div className="sa-profile-stat"><span>Account type</span><b>Local demo profile</b></div></div></div><Panel title="Profile information" subtitle="This profile is only a local UI preview"><form onSubmit={submit} className="sa-modal-form"><Field label="Full name"><input required value={form.name || ''} onChange={(event) => update('name',event.target.value)} placeholder="Your display name"/></Field><Field label="Email address"><input type="email" value={form.email || ''} onChange={(event) => update('email',event.target.value)} placeholder="you@example.com"/></Field><Field label="Role"><input value={form.role || ''} onChange={(event) => update('role',event.target.value)} placeholder="Administrator"/></Field><Field label="Short bio"><textarea rows="4" value={form.bio || ''} onChange={(event) => update('bio',event.target.value)} placeholder="A short profile description"/></Field><div className="sa-form-actions"><button className="sa-button sa-button-primary" type="submit"><Save size={16}/> Save profile</button></div></form></Panel></div><Panel title="Security and access" subtitle="Account security will be connected when backend authentication is implemented"><div className="sa-security-row"><div className="sa-security-icon"><ShieldCheck size={19}/></div><div><b>Authentication is not connected</b><p>This profile screen does not verify identity or change passwords. Do not use the prototype as production admin security.</p></div><span className="sa-status-warning">Setup required</span></div></Panel></div>;
+}
+
+function QuickSearch({ onClose }) {
+  const [query, setQuery] = useState(''); const navigate = useNavigate(); const options = [{label:'Dashboard',path:'/admin',icon:LayoutDashboard},{label:'Arduino Projects',path:'/admin/projects',icon:Code2},{label:'Add a project',path:'/admin/projects/new',icon:FilePlus2},{label:'Categories',path:'/admin/categories',icon:FolderKanban},{label:'Media Library',path:'/admin/media',icon:ImagePlus},{label:'Website Settings',path:'/admin/settings',icon:Settings},{label:'Admin Profile',path:'/admin/profile',icon:UserRound}].filter((item) => item.label.toLowerCase().includes(query.toLowerCase()));
+  return <div className="sa-modal-backdrop sa-command-backdrop" onMouseDown={(event) => {if(event.target===event.currentTarget)onClose();}}><section className="sa-command-modal" role="dialog" aria-modal="true" aria-label="Quick navigation"><div className="sa-command-input"><Search size={18}/><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Where would you like to go?"/><kbd>ESC</kbd></div><div className="sa-command-results">{options.map((item) => <button key={item.path} onClick={() => {navigate(item.path);onClose();}}><item.icon size={17}/><span>{item.label}</span><ArrowUpRight size={15}/></button>)}{!options.length && <p>No pages match your search.</p>}</div><div className="sa-command-footer"><span><kbd>↵</kbd> Open page</span><span><kbd>ESC</kbd> Close</span></div></section></div>;
 }
 
 export function AdminPage() {
-  return (
-    <div className="container admin-container">
-      <div className="admin-topbar">
-        <Link className="admin-breadcrumb" to="/admin">
-          <span className="admin-brand-dot">
-            <Code2 size={15} />
-          </span>
-
-          STEMNOID
-
-          <span>/</span>
-
-          <small>Creator Studio</small>
-        </Link>
-
-        <span className="prototype-pill">
-          <span />
-          Prototype
-        </span>
-      </div>
-
-      <div className="admin-layout">
-        <AdminSidebar />
-
-        <div className="admin-main">
-          <Routes>
-            <Route index element={<AdminOverview />} />
-
-            <Route path="login" element={<AdminLogin />} />
-
-            <Route
-              path="projects"
-              element={<ContentManager type="project" />}
-            />
-
-            <Route
-              path="lectures"
-              element={<ContentManager type="lecture" />}
-            />
-
-            <Route
-              path="courses"
-              element={<ContentManager type="course" />}
-            />
-
-            <Route
-              path="*"
-              element={<AdminOverview />}
-            />
-          </Routes>
-        </div>
-      </div>
-    </div>
-  );
+  return <AdminDataProvider><AdminShell/></AdminDataProvider>;
 }
