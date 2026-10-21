@@ -1,110 +1,186 @@
-
+import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import {
-  Menu,
-  X,
-  Search,
-  Youtube,
   BookOpen,
+  ChevronDown,
   Code2,
-  LayoutDashboard,
   Home,
+  Instagram,
+  LayoutDashboard,
+  Linkedin,
+  Menu,
+  Moon,
+  Share2,
+  Sun,
+  X,
+  Youtube,
 } from 'lucide-react';
 
-import { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-
+import { useTheme } from '../context/ThemeContext';
 import { Logo } from './Logo';
-import { ThemeToggle } from './ThemeToggle';
 
-const links = [
-  { to: '/', label: 'Home', icon: Home },
-  { to: '/learn', label: 'Learn', icon: BookOpen },
-  { to: '/projects', label: 'Projects', icon: Code2 },
-  { to: '/lectures', label: 'Lectures', icon: Youtube },
+const SOCIAL_LINKS = [
+  {
+    label: 'Instagram',
+    href: 'https://www.instagram.com/stemnoid?xtok=YWhvbG5xbzNyeGlq/',
+    icon: Instagram,
+    className: 'instagram',
+  },
+  {
+    label: 'LinkedIn',
+    href: 'https://www.linkedin.com/company/stemnoid/',
+    icon: Linkedin,
+    className: 'linkedin',
+  },
+  {
+    label: 'YouTube',
+    href: 'https://www.youtube.com/@stemnoid',
+    icon: Youtube,
+    className: 'youtube',
+  },
+];
+
+const NAVIGATION_LINKS = [
+  {
+    label: 'Home',
+    to: '/',
+    icon: Home,
+    end: true,
+  },
+  {
+    label: 'Learn',
+    to: '/learn',
+    icon: BookOpen,
+  },
+  {
+    label: 'Projects',
+    to: '/projects',
+    icon: Code2,
+  },
+  {
+    label: 'Lectures',
+    to: '/lectures',
+    icon: Youtube,
+  },
 ];
 
 export function Header() {
-  const [open, setOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const closeMenu = () => setOpen(false);
+  function closeMobileMenu() {
+    setIsMenuOpen(false);
+  }
 
   return (
     <header className="site-header">
       <div className="header-inner">
-        {/* Logo: Logo component already contains its own Link */}
-        <div className="header-brand" onClick={closeMenu}>
-          <Logo />
-        </div>
+        <Logo />
 
         <nav
           id="main-navigation"
-          className={`main-nav ${open ? 'nav-open' : ''}`}
+          className={`main-nav ${isMenuOpen ? 'nav-open' : ''}`}
           aria-label="Main navigation"
         >
-          {links.map(({ to, label, icon: Icon }) => (
+          {NAVIGATION_LINKS.map(({ label, to, icon: Icon, end }) => (
             <NavLink
-              key={to}
+              key={label}
               to={to}
-              end={to === '/'}
-              onClick={closeMenu}
+              end={end}
+              onClick={closeMobileMenu}
             >
-              <Icon size={16} />
+              <Icon size={16} aria-hidden="true" />
               <span>{label}</span>
             </NavLink>
           ))}
 
-          <Link
+          <NavLink
             className="nav-admin-mobile"
             to="/admin"
-            onClick={closeMenu}
+            onClick={closeMobileMenu}
           >
-            <LayoutDashboard size={16} />
+            <LayoutDashboard size={16} aria-hidden="true" />
             <span>Creator Studio</span>
-          </Link>
+          </NavLink>
 
-          <a
-            className="nav-youtube-mobile"
-            href="https://www.youtube.com/@stemnoid"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={closeMenu}
-          >
-            <Youtube size={16} />
-            <span>YouTube Channel</span>
-          </a>
+          <details className="social-menu">
+            <summary
+              className="social-menu-trigger"
+              aria-label="Open STEMNOID social media links"
+            >
+              <Share2 size={16} aria-hidden="true" />
+              <span>Follow us</span>
+              <ChevronDown
+                className="social-menu-chevron"
+                size={15}
+                aria-hidden="true"
+              />
+            </summary>
+
+            <div className="social-menu-panel">
+              <span className="social-menu-label">CONNECT WITH STEMNOID</span>
+
+              {SOCIAL_LINKS.map(
+                ({ label, href, icon: Icon, className }) => (
+                  <a
+                    key={label}
+                    className={`social-menu-link ${className}`}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={closeMobileMenu}
+                    aria-label={`Visit STEMNOID on ${label} (opens in a new tab)`}
+                  >
+                    <Icon size={17} aria-hidden="true" />
+                    <span>{label}</span>
+                  </a>
+                ),
+              )}
+            </div>
+          </details>
         </nav>
 
         <div className="header-actions">
-          <Link
-            className="icon-button search-shortcut"
-            to="/projects"
-            aria-label="Browse projects"
-            title="Browse projects"
-            onClick={closeMenu}
+          <button
+            className="icon-button"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={
+              theme === 'dark'
+                ? 'Switch to light theme'
+                : 'Switch to dark theme'
+            }
           >
-            <Search size={17} />
-          </Link>
+            {theme === 'dark' ? (
+              <Sun size={18} aria-hidden="true" />
+            ) : (
+              <Moon size={18} aria-hidden="true" />
+            )}
+          </button>
 
-          <ThemeToggle />
-
-          <Link
-            className="button button-primary creator-button"
+          <NavLink
+            className="creator-button button button-primary"
             to="/admin"
-            onClick={closeMenu}
           >
             <span>Creator Studio</span>
-            <LayoutDashboard size={16} />
-          </Link>
+            <LayoutDashboard size={16} aria-hidden="true" />
+          </NavLink>
 
           <button
+            className="menu-button icon-button"
             type="button"
-            className="icon-button menu-button"
-            onClick={() => setOpen((current) => !current)}
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            aria-expanded={open}
+            onClick={() => setIsMenuOpen((current) => !current)}
+            aria-label={
+              isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'
+            }
+            aria-expanded={isMenuOpen}
             aria-controls="main-navigation"
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            {isMenuOpen ? (
+              <X size={20} aria-hidden="true" />
+            ) : (
+              <Menu size={20} aria-hidden="true" />
+            )}
           </button>
         </div>
       </div>
